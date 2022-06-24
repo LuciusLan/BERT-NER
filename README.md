@@ -1,3 +1,8 @@
+# Forked from https://github.com/kamalkraj/BERT-NER
+
+My own implementation of ACL 2021 paper [Modularized Interaction Network for Named Entity Recognition](https://aclanthology.org/2021.acl-long.17.pdf)
+
+
 # BERT NER
 
 Use google BERT to do CoNLL-2003 NER !
