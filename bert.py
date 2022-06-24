@@ -12,8 +12,8 @@ from nltk import word_tokenize
 from transformers import AutoModel, AutoConfig, AutoTokenizer
 
 
-LABEL_2_ID = {'PAD':0, 'ORG': 1, 'MISC': 2, 'PER': 3,
-              'LOC': 4, 'non': 5}
+LABEL_2_ID = {'PAD':0, 'O': 1, 'MISC': 2, 'PER': 3,
+              'ORG': 4, 'LOC': 5, 'SP': 6}
 LABEL_BIO = {'<PAD>': 0, 'O': 1, 'B-MISC': 2, 'I-MISC': 3, 'B-PER': 4, 'I-PER': 5, 'B-ORG': 6, 'I-ORG': 7, 
              'B-LOC': 8, 'I-LOC': 9, '[CLS]': 10, '[SEP]': 11} #, '<START>': 18, '<STOP>': 19}
 
