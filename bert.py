@@ -22,7 +22,7 @@ MAX_LEN = 128
 BATCH_SIZE = 1
 LEARNING_RATE = 2e-5
 NUM_EPOCH = 8
-LSTM_HIDDEN = 300
+LSTM_HIDDEN = 100
 BIAFFINE_DROPOUT = 0.3
 BASELINE = False
 LONGBERT = False # True when using Longformer / Bigbird
@@ -108,9 +108,12 @@ class TModel(nn.Module):
             
             type_hidden = self.type_lstm(sequence_output)[0]
             type_hidden = self.dropout(type_hidden)
+
+            #eq 3
             boundary_result = F.logsigmoid(self.boundary_final0(sequence_output)+self.boundary_final1(boundary_hidden)).mul(boundary_hidden)
             type_result = F.logsigmoid(self.type_final0(sequence_output)+self.type_final1(type_hidden)).mul(type_hidden)
             seg_result = F.logsigmoid(self.seg_final0(sequence_output)+self.seg_final1(seg_result)).mul(seg_result)
+            #eq 4
             ner_result = self.ner_final(torch.cat([sequence_output, boundary_result, type_result, seg_result], dim=-1))
             #del seg_result, boundary_result, type_result
             #torch.cuda.empty_cache()

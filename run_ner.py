@@ -257,34 +257,41 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
 
 def convert_bio_to_bound(labels_bio):
     """
-    00:'O' 01:'B-MISC' 02:'I-MISC' 03:'B-PER' 04:'I-PER' 05:'B-ORG' 06:'I-ORG' 07:'B-LOC' 08:'I-LOC' 09:'[CLS]' 10:'[SEP]'
+    00:'PAD' 01:'O' 02:'B-MISC' 03:'I-MISC' 04:'B-PER' 05:'I-PER' 06:'B-ORG' 07:'I-ORG' 08:'B-LOC' 09:'I-LOC' 10:'[CLS]' 11:'[SEP]'
     """
     bound = []
+    prev = -1
     for e in labels_bio:
-        if e in [1, 3, 5, 7]:
+        if e in [2, 4, 6, 8]:
             bound.append(1)
+        elif (e==1 or e==11) and prev in [3, 5, 7, 9]:
+            bound[-1] = 1
+            bound.append(0)
         else:
             bound.append(0)
+        prev = e
     return bound
 
 def convert_bio_to_type(labels_bio):
     """
-    0:O, 1:MISC 2:PER 3:ORG 4:LOC 5:SP
+    0:PAD 1:O 2:MISC 3:PER 4:ORG 5:LOC 6:SP
     """
     type_label = []
     for e in labels_bio:
         if e == 0:
             type_label.append(0)
-        elif e in [1, 2]:
+        elif e == 1:
             type_label.append(1)
-        elif e in [3, 4]:
+        elif e in [2, 3]:
             type_label.append(2)
-        elif e in [5, 6]:
+        elif e in [4, 5]:
             type_label.append(3)
-        elif e in [7, 8]:
+        elif e in [6, 7]:
             type_label.append(4)
-        else:
+        elif e in [8, 9]:
             type_label.append(5)
+        else:
+            type_label.append(6)
 
     return type_label
 
@@ -341,7 +348,7 @@ def main():
                         type=int,
                         help="Total batch size for eval.")
     parser.add_argument("--learning_rate",
-                        default=5e-5,
+                        default=1e-5,
                         type=float,
                         help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs",
@@ -545,7 +552,7 @@ def main():
                         logits, _, _ = model(input_ids, input_mask)
 
 
-                logits = torch.argmax(F.log_softmax(logits,dim=2),dim=2)
+                    logits = torch.argmax(F.log_softmax(logits,dim=2),dim=2)
                 logits = logits.detach().cpu().numpy()
                 label_ids = label_ids.to('cpu').numpy()
                 input_mask = input_mask.to('cpu').numpy()
