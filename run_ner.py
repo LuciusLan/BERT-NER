@@ -28,7 +28,7 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
 
-from bert import TModel
+from bert import TModel, FocalLoss
 from transformers import AutoConfig, AutoTokenizer
 
 
@@ -475,9 +475,9 @@ def main():
         ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
 
-    ner_loss = nn.CrossEntropyLoss()
-    boundary_loss = nn.CrossEntropyLoss()
-    type_loss = nn.CrossEntropyLoss()
+    ner_loss = FocalLoss(gamma=2) #nn.CrossEntropyLoss()
+    boundary_loss = FocalLoss(gamma=2)#nn.CrossEntropyLoss()
+    type_loss = FocalLoss(gamma=2)#nn.CrossEntropyLoss()
 
 
     if args.fp16:
@@ -547,9 +547,9 @@ def main():
 
                 with torch.no_grad():
                     if model.baseline:
-                        logits = model(input_ids, input_mask)
+                        logits = model(input_ids, input_mask, valid_ids=valid_ids)
                     else:
-                        logits, _, _ = model(input_ids, input_mask)
+                        logits, _, _ = model(input_ids, input_mask, valid_ids=valid_ids)
 
 
                     logits = torch.argmax(F.log_softmax(logits,dim=2),dim=2)
@@ -571,7 +571,7 @@ def main():
                             temp_1.append(label_map[label_ids[i][j]])
                             temp_2.append(label_map[logits[i][j]])
             report = classification_report(y_true, y_pred, digits=4)
-            logger.info("\n%s", report)
+            #logger.info("\n%s", report)
             output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
             with open(output_eval_file, "w") as writer:
                 logger.info("***** Eval results *****")
@@ -615,10 +615,10 @@ def main():
                 input_ids, input_mask, segment_ids, label_ids, valid_ids,l_mask, boundarys, types = batch
                 active_padding_mask = input_mask.view(-1) == 1
                 if model.baseline:
-                    logit = model(input_ids, input_mask)
+                    logit = model(input_ids, input_mask, valid_ids=valid_ids)
                     loss = ner_loss(logit.view(-1, num_labels)[active_padding_mask], label_ids.view(-1)[active_padding_mask])
                 else:
-                    ner_logit, boundary_logit, type_logit = model(input_ids, input_mask)
+                    ner_logit, boundary_logit, type_logit = model(input_ids, input_mask, valid_ids=valid_ids)
                     ner_loss_ = ner_loss(ner_logit.view(-1, num_labels)[active_padding_mask], label_ids.view(-1)[active_padding_mask])
                     boundary_loss_ = boundary_loss(boundary_logit.view(-1, boundary_logit.size(-1))[active_padding_mask], boundarys.view(-1)[active_padding_mask])
                     type_loss_ = type_loss(type_logit.view(-1, type_logit.size(-1))[active_padding_mask], types.view(-1)[active_padding_mask])
@@ -650,7 +650,7 @@ def main():
                     global_step += 1
             evaluation()
         args.eval_on = 'test'
-        print('testing\n')
+        print('\ntesting\n')
         evaluation()
         # Save a trained model and the associated configuration
         model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
