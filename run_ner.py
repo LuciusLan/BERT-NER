@@ -300,7 +300,7 @@ def main():
 
     ## Required parameters
     parser.add_argument("--data_dir",
-                        default='C:\\Users\\cifel\\OneDrive\\MSAI\\SourceCodes\\Python\\BERT-NER\\data',
+                        default='./data',
                         type=str,
                         help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
     parser.add_argument("--bert_model", default='bert-base-cased', type=str,
